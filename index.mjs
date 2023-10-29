@@ -5,23 +5,28 @@ import "colors";
 // @ts-ignore
 import check from "check-if-word";
 // type checkIfWord = { check: (word: string) => boolean };
+
 const words = check("en");
 const alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
 const count = process.argv[3] || 4; // 4 letters
 const startFrom = process.argv[2] || Array(count).fill("a").join(""); // start from aaaa
+const checkIf =
+  process.argv[4] === "true" && process.argv[4] ? true : !process.argv[4] || process.argv[4] === "false" ? false : true; // start from aaaa
 const getFile = (post) => `npm-names-${post}.txt`;
 
 const checkAndWrite = async (name) => {
   const log = console.log;
   log("Checking", name.yellow);
   if (startFrom > name) return;
-  try {
-    if (name.length < 3) return;
-    if (name.length > 15) return;
-    if (!words.check(name)) return;
-  } catch (error) {
-    console.log(error);
-    return;
+  if (checkIf) {
+    try {
+      if (name.length < 3) return;
+      if (name.length > 15) return;
+      if (!words.check(name)) return;
+    } catch (error) {
+      console.log(error);
+      return;
+    }
   }
   let available = false;
   let attempt = 0;
@@ -68,6 +73,9 @@ const loop = async (letters, remaining) => {
 
 const main = async () => {
   console.log("running main");
+
+  console.table({ startFrom, count, checkIf });
+  await sleep(2000); // sleep for 2 seconds
 
   console.log("Starting from", startFrom);
   for (const letter of alphabet) {
