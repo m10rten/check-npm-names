@@ -4,25 +4,37 @@ import { appendFileSync } from "fs";
 import "colors";
 // @ts-ignore
 import check from "check-if-word";
+import logUpdate from "log-update";
+
 // type checkIfWord = { check: (word: string) => boolean };
+
+const updateLog = (text) => {
+  logUpdate(`
+  ${availables.length} available
+  ${text}
+  `);
+};
 
 const words = check("en");
 const alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
 const count = process.argv[3] || 4; // 4 letters
 const startFrom = process.argv[2] || Array(count).fill("a").join(""); // start from aaaa
 const checkIf =
-  process.argv[4] === "true" && process.argv[4] ? true : !process.argv[4] || process.argv[4] === "false" ? false : true; // start from aaaa
+  process.argv[4] === "true" && process.argv[4] ? true : process.argv[4] && process.argv[4] === "false" ? false : true; // start from aaaa
 const getFile = (post) => `npm-names-${post}.txt`;
 
+const availables = [];
+
 const checkAndWrite = async (name) => {
-  const log = console.log;
-  log("Checking", name.yellow);
+  updateLog("Checking " + name.yellow + ":");
   if (startFrom > name) return;
   if (checkIf) {
     try {
-      if (name.length < 3) return;
-      if (name.length > 15) return;
-      if (!words.check(name)) return;
+      if (name.length < 3 || name.length > 15 || !words.check(name)) {
+        updateLog(`Checking ${name.red}: invalid`);
+        await sleep(50);
+        return;
+      }
     } catch (error) {
       console.log(error);
       return;
@@ -49,11 +61,20 @@ const checkAndWrite = async (name) => {
 
   if (available) {
     appendFileSync(getFile(`${name[0]}-${count}`), name + "\n");
-    console.log(name.green + " available");
+    availables.push(name);
+    updateLog(`Checking ${name.green}: available`);
+    await sleep(150);
   } else {
-    console.log(name.grey);
+    updateLog(`Checking ${name.gray}: unavailable`);
+    await sleep(150);
   }
   return;
+};
+
+const clear = () => {
+  updateLog("");
+
+  availables.length = 0;
 };
 
 const loop = async (letters, remaining) => {
@@ -84,6 +105,7 @@ const main = async () => {
     // we always start looping like this.
     const remaining = Number.parseInt(typeof count === "string" ? count : "4") - 1;
     await loop([letter], remaining);
+    clear();
   }
 
   // for count times, loop through alphabet
